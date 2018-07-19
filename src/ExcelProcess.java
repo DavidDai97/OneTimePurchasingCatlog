@@ -6,6 +6,7 @@ import jxl.write.*;
 
 import javax.swing.*;
 import java.io.*;
+import java.lang.Number;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -173,30 +174,62 @@ public class ExcelProcess {
             WritableSheet catlogSheet = outputFile.createSheet("Catlog", 0);
             jxl.write.Label itemNameTitle = new jxl.write.Label(itemNameCol, 0, "Item Name", titleFormat);
             catlogSheet.addCell(itemNameTitle);
-            catlogSheet.setColumnView(0, 22);
+            catlogSheet.setColumnView(itemNameCol, 22);
             jxl.write.Label partNumTitle = new jxl.write.Label(itemTypeCol, 0, "Item Type or Part #", titleFormat);
             catlogSheet.addCell(partNumTitle);
-            catlogSheet.setColumnView(0, 30);
+            catlogSheet.setColumnView(itemTypeCol, 30);
             jxl.write.Label brandTitle = new jxl.write.Label(itemBrandCol, 0, "Brand", titleFormat);
             catlogSheet.addCell(brandTitle);
-            catlogSheet.setColumnView(0, 18);
+            catlogSheet.setColumnView(itemBrandCol, 18);
             jxl.write.Label supplierTitle = new jxl.write.Label(itemSupplierCol, 0, "Supplier", titleFormat);
             catlogSheet.addCell(supplierTitle);
-            catlogSheet.setColumnView(0, 18);
+            catlogSheet.setColumnView(itemSupplierCol, 18);
             jxl.write.Label leadTimeTitle = new jxl.write.Label(itemLeadTimeCol, 0, "Lead Time", titleFormat);
             catlogSheet.addCell(leadTimeTitle);
-            catlogSheet.setColumnView(0, 18);
+            catlogSheet.setColumnView(itemLeadTimeCol, 18);
             jxl.write.Label priceTitle = new jxl.write.Label(itemPriceCol, itemPriceCol, "Item Price", titleFormat);
             catlogSheet.addCell(priceTitle);
-            catlogSheet.setColumnView(0, 22);
+            catlogSheet.setColumnView(itemPriceCol, 22);
             jxl.write.Label purchasedTimeTitle = new jxl.write.Label(itemPurchasedTimeCol, 0, "Item Purchased Time", titleFormat);
             catlogSheet.addCell(purchasedTimeTitle);
-            catlogSheet.setColumnView(0, 30);
+            catlogSheet.setColumnView(itemPurchasedTimeCol, 30);
             jxl.write.Label buyerTitle = new jxl.write.Label(itemBuyerCol, 0, "Buyer", titleFormat);
             catlogSheet.addCell(buyerTitle);
-            catlogSheet.setColumnView(0, 18);
+            catlogSheet.setColumnView(itemBuyerCol, 18);
+            int rowCnt = 1;
             while(!MainGUI.itemNameQueue.isEmpty()){
                 String currItemName = MainGUI.itemNameQueue.poll();
+                Label itemNameLabel = new Label(itemNameCol, rowCnt, currItemName, normalFormat);
+                catlogSheet.addCell(itemNameLabel);
+                TypeOrPartNum currPartNumNode = MainGUI.catlogNodes.get(currItemName);
+                for(int i = 0; i < currPartNumNode.getSize(); i++){
+                    String currItemPartNum = currPartNumNode.getKey(i);
+                    Label itemPartNumLabel = new Label(itemTypeCol, rowCnt, currItemPartNum, normalFormat);
+                    catlogSheet.addCell(itemPartNumLabel);
+                    Brand currBrandNode = currPartNumNode.get(i);
+                    for(int j = 0; j < currBrandNode.getSize(); j++){
+                        String currBrand = currBrandNode.getKey(j);
+                        Label itemBrandLabel = new Label(itemBrandCol, rowCnt, currBrand, normalFormat);
+                        catlogSheet.addCell(itemBrandLabel);
+                        Supplier currSupplierNode = currBrandNode.get(j);
+                        for(int k = 0; k < currSupplierNode.getSize(); j++){
+                            String currSupplier = currSupplierNode.getKey(j);
+                            Label itemSupplierLabel = new Label(itemSupplierCol, rowCnt, currSupplier, normalFormat);
+                            catlogSheet.addCell(itemSupplierLabel);
+                            //Lead time, Price, Purchase times, Buyer
+                            Item currItemNode = currSupplierNode.get(k);
+                            jxl.write.Number currLeadTimeLabel = new jxl.write.Number(itemLeadTimeCol, rowCnt, currItemNode.getAverageLeadTime(), normalFormat);
+                            catlogSheet.addCell(currLeadTimeLabel);
+                            jxl.write.Number currPriceLabel = new jxl.write.Number(itemPriceCol, rowCnt, currItemNode.getPrice(), normalFormat);
+                            catlogSheet.addCell(currPriceLabel);
+                            jxl.write.Number currPurchaseTimesLabel = new jxl.write.Number(itemPurchasedTimeCol, rowCnt, currItemNode.getPurchaseTime(), normalFormat);
+                            catlogSheet.addCell(currPurchaseTimesLabel);
+                            Label currBuyerLabel = new Label(itemBuyerCol, rowCnt, currItemNode.getBuyer(), normalFormat);
+                            catlogSheet.addCell(currBuyerLabel);
+                            rowCnt++;
+                        }
+                    }
+                }
             }
 
             outputFile.write();
