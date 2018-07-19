@@ -104,9 +104,48 @@ public class MainGUI {
 
     public static String[] userDefineDescription(String description, String itemName, String itemBrand, String itemPartNum){
         String[] definitionResult = new String[3];
-        definitionResult[0] = JOptionPane.showInputDialog(null, "Item Name of: \n" + description, "Item Name", JOptionPane.PLAIN_MESSAGE);
-        definitionResult[1] = JOptionPane.showInputDialog(null, "Item Brand of: \n" + description, "Item Brand", JOptionPane.PLAIN_MESSAGE);
-        definitionResult[2] = JOptionPane.showInputDialog(null, "Item Type or Part Num of: \n" + description, "Type #", JOptionPane.PLAIN_MESSAGE);
+        if(itemName == null) {
+            definitionResult[0] = JOptionPane.showInputDialog(null, "Item Name of: \n" + description, "Item Name", JOptionPane.PLAIN_MESSAGE);
+        }
+        else{
+            int option = JOptionPane.showOptionDialog(null, "Is the name of this item: " + itemName,"Confirm Name",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE,null,null,null);
+            System.out.println(option);
+            if(option == 0) {
+                definitionResult[0] = itemName;
+            }
+            else{
+                definitionResult[0] = JOptionPane.showInputDialog(null, "Item Name of: \n" + description, "Item Name", JOptionPane.PLAIN_MESSAGE);
+            }
+        }
+        if(itemBrand == null) {
+            definitionResult[1] = JOptionPane.showInputDialog(null, "Item Brand of: \n" + description, "Item Brand", JOptionPane.PLAIN_MESSAGE);
+        }
+        else{
+            int option = JOptionPane.showOptionDialog(null, "Is the brand of this item: " + itemBrand,"Confirm Brand",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE,null,null,null);
+            System.out.println(option);
+            if(option == 0) {
+                definitionResult[1] = itemBrand;
+            }
+            else{
+                definitionResult[1] = JOptionPane.showInputDialog(null, "Item Brand of: \n" + description, "Item Brand", JOptionPane.PLAIN_MESSAGE);
+            }
+        }
+        if(itemPartNum == null) {
+            definitionResult[2] = JOptionPane.showInputDialog(null, "Item Type or Part Num of: \n" + description, "Type #", JOptionPane.PLAIN_MESSAGE);
+        }
+        else{
+            int option = JOptionPane.showOptionDialog(null, "Is the partNum of this item: " + itemPartNum,"Confirm Brand",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE,null,null,null);
+            System.out.println(option);
+            if(option == 0) {
+                definitionResult[2] = itemPartNum;
+            }
+            else{
+                definitionResult[2] = JOptionPane.showInputDialog(null, "Item Type or Part Num of: \n" + description, "Type #", JOptionPane.PLAIN_MESSAGE);
+            }
+        }
         if(definitionResult[0] == null || definitionResult[1] == null || definitionResult[2] == null ||
                 definitionResult[0].equals("") || definitionResult[1].equals("") || definitionResult[2].equals("")){
             int option = JOptionPane.showOptionDialog(null, "If you want to stop this process press OK, if you want to skip the PO line press cancel!","Exit",
@@ -188,9 +227,9 @@ public class MainGUI {
     }
 
     private static void createGUI(){
-        JFrame mainFrame = createFrame(400, 100, 500, 350, Color.LIGHT_GRAY,
+        JFrame mainFrame = createFrame(400, 100, 550, 350, Color.LIGHT_GRAY,
                 "Performance Evaluator Version 2.0", null, false);
-        JPanel fileInput = createTextInput("File Name Postfix (YYYYMMDD-YYYYMMDD): ", 10, 50, 50, 400, 50);
+        JPanel fileInput = createTextInput("File Name Postfix (YYYYMMDD-YYYYMMDD): ", 10, 50, 50, 450, 50);
         JButton exitB = createButton("Exit!", 275, 125, 175, 75,
                 new Font("Arial", Font.BOLD, 25), Color.RED);
         JButton processData = createButton("Process Data", 50, 125, 175, 75,

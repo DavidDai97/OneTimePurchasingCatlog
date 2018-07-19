@@ -155,6 +155,7 @@ public class ExcelProcess {
                 }
             }
             // Output to an excel sheet as a catlog.
+            outputCatlog();
         }
     }
 
@@ -231,7 +232,6 @@ public class ExcelProcess {
                     }
                 }
             }
-
             outputFile.write();
             outputFile.close();
             writeCnt = 0;
@@ -286,6 +286,7 @@ public class ExcelProcess {
             if(description.contains(currItem)){
                 itemName = currItem;
                 nameChanged = true;
+                break;
             }
         }
         for(int i = 0; i < MainGUI.brandKnown.size(); i++){
@@ -295,7 +296,18 @@ public class ExcelProcess {
                 if(description.contains(currBrandsNames.get(j))){
                     itemBrand = currBrand;
                     brandChanged = true;
+                    break;
                 }
+            }
+        }
+        if(!brandChanged){
+            if(description.contains("£¨")){
+                description = description.replace('£¨', '(');
+                description = description.replace('£©', ')');
+            }
+            if(description.contains("(") && description.contains(")")){
+                itemBrand = description.substring(description.indexOf('(')+1, description.indexOf(')'));
+                brandChanged = true;
             }
         }
         for(int i = 0; i < MainGUI.typeOrPartNum.size(); i++){
@@ -303,14 +315,12 @@ public class ExcelProcess {
             if(description.contains(currPartNum)){
                 itemPartNum = currPartNum;
                 partNumChanged = true;
+                break;
             }
         }
         if(!nameChanged || !brandChanged || ! partNumChanged){
             String[] definition = MainGUI.userDefineDescription(description, itemName, itemBrand, itemPartNum);
             if(definition != null) {
-                System.out.println("Item Name: " + definition[0]);
-                System.out.println("Item Brand: " + definition[1]);
-                System.out.println("Item Type or Part #: " + definition[2]);
                 return definition;
             }
             else{
