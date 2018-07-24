@@ -89,10 +89,10 @@ public class DataInAndUpdate {
         return 0;
     }
 
-    public static int updateData(char dataToWrite){
-        if(dataChanged == 0){
-            return 0;
-        }
+    public static int updateData(char dataToWrite, boolean isAppend){
+//        if(dataChanged == 0){
+//            return 0;
+//        }
         ArrayList<String> currData;
         boolean isBrand = false;
         if(dataToWrite == MainGUI.BRAND){
@@ -117,7 +117,7 @@ public class DataInAndUpdate {
         }
         File secondFile=new File(filePath);
         try {
-            FileOutputStream writer = new FileOutputStream(secondFile);
+            FileOutputStream writer = new FileOutputStream(secondFile, isAppend);
             BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(writer,"gbk"));
             for(int i = 0; i < currData.size(); i++){
                 if(!isBrand) {
@@ -130,7 +130,7 @@ public class DataInAndUpdate {
                         bw.write(brands.get(j));
                         bw.write(" & ");
                     }
-                    bw.write(brands.get(brands.size()) + "\r\n");
+                    bw.write(brands.get(brands.size()-1) + "\r\n");
                 }
             }
             bw.close();
@@ -145,19 +145,19 @@ public class DataInAndUpdate {
 
     public static int updateAll(){
         int errCode;
-        if((errCode = updateData(MainGUI.BRAND)) != 0){
+        if((errCode = updateData(MainGUI.BRAND, false)) != 0){
             return (10+errCode);
         }
-        if((errCode = updateData(MainGUI.ITEM)) != 0){
+        if((errCode = updateData(MainGUI.ITEM, true)) != 0){
             return (20+errCode);
         }
-        if((errCode = updateData(MainGUI.TYPE)) != 0){
+        if((errCode = updateData(MainGUI.TYPE, true)) != 0){
             return (30+errCode);
         }
-        if((errCode = updateData(MainGUI.USELESS)) != 0){
+        if((errCode = updateData(MainGUI.USELESS, true)) != 0){
             return (40+errCode);
         }
-        if((errCode = updateData(MainGUI.NOTCONSIDER)) != 0){
+        if((errCode = updateData(MainGUI.NOTCONSIDER, true)) != 0){
             return (50+errCode);
         }
         return 0;
