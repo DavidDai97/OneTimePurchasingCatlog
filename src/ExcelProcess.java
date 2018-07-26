@@ -36,7 +36,6 @@ public class ExcelProcess {
         processDataHelper(dataFile);
         outputCatlog();
     }
-
     private static Queue<Sheet> getSheetNum(Workbook wb){
         int sheet_size = wb.getNumberOfSheets();
         Queue<Sheet> results = new LinkedList<>();
@@ -48,7 +47,6 @@ public class ExcelProcess {
         }
         return results;
     }
-
     private static void processDataHelper(File dataFile) throws Exception{
         InputStream is = new FileInputStream(dataFile.getAbsolutePath());
         Workbook wb = Workbook.getWorkbook(is);
@@ -171,7 +169,6 @@ public class ExcelProcess {
             }
         }
     }
-
     private static boolean isDescriptionUseless(String description){
         description = replaceChinese(description);
         for(int i = 0; i < MainGUI.suppliersNotConsider.size(); i++){
@@ -219,7 +216,6 @@ public class ExcelProcess {
         }
         return d[n][m];
     }
-
     private static int min(int one, int two, int three) {
         return (one = one < two ? one : two) < three ? one : three;
     }
@@ -320,7 +316,6 @@ public class ExcelProcess {
             }
         }
     }
-
     public static void initializeFormat(){
         try{
             WritableFont titleFont = new WritableFont(WritableFont.ARIAL, 10, WritableFont.BOLD,false);
@@ -348,14 +343,19 @@ public class ExcelProcess {
             System.out.println("Err: 5, Initialize Error.");
         }
     }
-
     public static void main(String[] args){
         processDescription("ÍÏÁ´,25.57.R  SYSW17016");
 //        System.out.println(getSimilarityRatio("Rnd2017001-PROT	2017/2/7	Peicong.Qi	2000XC-102	MAIN SUPPORT Ö÷Ö§¼Ü", "Rnd2017001-PROT 2017/2/7    Peicong.Qi  2000XC-103  UPER BOX COVER ÉÏ¿ò¸Ç°å"));
     }
 
+    private static boolean isBrandSure = false;
+    private static boolean isItemSure = false;
+    private static boolean isPartNumSure = false;
     private static String[] processDescription(String description){
         String descriptionSearch = replaceChinese(description);
+        isBrandSure = false;
+        isItemSure = false;
+        isPartNumSure = false;
         descriptionSearch = descriptionSearch.toUpperCase();
         String itemBrand = findPossibleBrand(descriptionSearch);
         String itemPartNum = findPossiblePartNum(descriptionSearch);
@@ -363,7 +363,7 @@ public class ExcelProcess {
         if(MainGUI.uselessData.contains(itemPartNum) && itemName == null){
             itemName = "NULL";
         }
-        if(itemName == null || itemBrand == null || itemPartNum == null){
+        if(!isBrandSure || !isItemSure || !isPartNumSure){
             MyRunnable definitionRunnable = new MyRunnable(descriptionSearch, itemName, itemBrand, itemPartNum, Thread.currentThread());
             Thread definitionThread = new Thread(definitionRunnable);
             definitionThread.start();
@@ -401,7 +401,6 @@ public class ExcelProcess {
         add2Dict(definition);
         return definition;
     }
-
     private static void add2Dict(String[] definition){
         if(definition[0].equals("NULL")){
             return;
@@ -422,7 +421,6 @@ public class ExcelProcess {
             MainGUI.typeOrPartNum.add(definition[2].toUpperCase());
         }
     }
-
     private static String replaceChinese(String original){
         original = original.replace('£¬', ',');
         original = original.replace('£¨', '(');
@@ -430,13 +428,13 @@ public class ExcelProcess {
         original = original.replace('\t', ' ');
         return original;
     }
-
     private static String findPossibleItemName(String description){
         String itemName = null;
         for(int i = 0; i < MainGUI.itemKnown.size(); i++){
             String currItem = MainGUI.itemKnown.get(i);
             if(description.contains(currItem.toUpperCase())){
                 itemName = currItem;
+                isItemSure = true;
                 break;
             }
         }
@@ -454,7 +452,6 @@ public class ExcelProcess {
         }
         return itemName;
     }
-
     private static String findPossibleBrand(String description){
         String itemBrand = null;
         for(int i = 0; i < MainGUI.brandKnown.size(); i++){
@@ -463,6 +460,7 @@ public class ExcelProcess {
             for(int j = 0; j < currBrandsNames.size(); j++){
                 if(description.contains(currBrandsNames.get(j))){
                     itemBrand = currBrand;
+                    isBrandSure = true;
                     break;
                 }
             }
@@ -477,21 +475,18 @@ public class ExcelProcess {
         }
         return itemBrand;
     }
-
     private static String findPossiblePartNum(String description){
         String itemPartNum = null;
         for(int i = 0; i < MainGUI.typeOrPartNum.size(); i++){
             String currPartNum = MainGUI.typeOrPartNum.get(i);
             if(description.toUpperCase().contains(currPartNum.toUpperCase())){
                 itemPartNum = currPartNum;
+                isPartNumSure = true;
                 break;
             }
         }
         if(itemPartNum != null){
             return itemPartNum;
-        }
-        if(description.contains("/")){
-            return null;
         }
         int patternNum = findCharacterNum(description, "[+-]");
         String temp= "\\w+";
@@ -507,11 +502,9 @@ public class ExcelProcess {
         }
         return itemPartNum;
     }
-
     private static int findCharacterNum(String text, String regex){
         return text.split(""+regex).length-1;
     }
-
     private static int calcDateDifference(String endDate, String startDate){
         Date start, end;
         try {
@@ -536,7 +529,6 @@ public class ExcelProcess {
         toCalendar.set(Calendar.MILLISECOND, 0);
         return (int) ((toCalendar.getTime().getTime() - fromCalendar.getTime().getTime()) / (1000 * 60 * 60 * 24));
     }
-
     private static void copyFile(String oldPath, String newPath) throws IOException {
         File oldFile = new File(oldPath);
         File file = new File(newPath);
