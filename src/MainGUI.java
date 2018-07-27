@@ -19,6 +19,7 @@ public class MainGUI {
     public static ArrayList<String> suppliersNotConsider = new ArrayList<>();
     public static HashMap<String, ArrayList<String>> brandGroups = new HashMap<>();
     public static Map<String, TypeOrPartNum> catlogNodes = new HashMap<>();
+    public static Map<String, String> namePartNumPair = new HashMap<>();
     public static Queue<String> itemNameQueue = new LinkedList<>();
     private static JTextField resultText;
     public static String[] definitionResult = new String[10];

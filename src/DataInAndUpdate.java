@@ -4,6 +4,7 @@ import java.util.*;
 public class DataInAndUpdate {
     private static int dataChanged = 0;
     private static final String filePath = "../ReferenceData/reference.txt";
+    private static final String pairFilePath = "../ReferenceData/pair.txt";
 
     public static int readData(char dataToRead){
         ArrayList<String> resultString;
@@ -70,6 +71,39 @@ public class DataInAndUpdate {
         return 0;   // No Error exist, return 0.
     }
 
+    public static int readPairs(){
+        FileInputStream reader;
+        File firstFile = new File(pairFilePath);
+        BufferedReader br;
+        try{
+            reader = new FileInputStream(firstFile);
+            br = new BufferedReader(new InputStreamReader(reader, "gbk"));
+        }
+        catch(FileNotFoundException e){
+            System.out.println("Err 1: " + e.toString());
+            return 1; // Error code 1, file not found.
+        }
+        catch (UnsupportedEncodingException e){
+            System.out.println("Err 2: " + e.toString());
+            return 1;
+        }
+        String currString;
+        try {
+            while ((currString = br.readLine()) != null) {
+                String partNum = currString.substring(0, currString.indexOf('!'));
+                String itemName = currString.substring(currString.indexOf('!')+1);
+                MainGUI.namePartNumPair.putIfAbsent(partNum, itemName);
+            }
+            br.close();
+            reader.close();
+        }
+        catch(IOException e){
+            System.out.println("Err: " + e.toString());
+            return 2;   // Error code 2, data read error.
+        }
+        return 0;   // No Error exist, return 0.
+    }
+
     public static int readAll(){
         int errCode;
         if((errCode = readData(MainGUI.BRAND)) != 0){
@@ -83,16 +117,17 @@ public class DataInAndUpdate {
         }
         if((errCode = readData(MainGUI.USELESS)) != 0){
             return (40+errCode);
-        }if((errCode = readData(MainGUI.NOTCONSIDER)) != 0){
+        }
+        if((errCode = readData(MainGUI.NOTCONSIDER)) != 0){
             return (50+errCode);
+        }
+        if((errCode = readPairs()) != 0){
+            return (60+errCode);
         }
         return 0;
     }
 
     public static int updateData(char dataToWrite, boolean isAppend){
-//        if(dataChanged == 0){
-//            return 0;
-//        }
         ArrayList<String> currData;
         boolean isBrand = false;
         if(dataToWrite == MainGUI.BRAND){
@@ -143,6 +178,24 @@ public class DataInAndUpdate {
         return 0;
     }
 
+    public static int updatePairs(){
+        File secondFile=new File(pairFilePath);
+        try {
+            FileOutputStream writer = new FileOutputStream(secondFile);
+            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(writer,"gbk"));
+            for (Map.Entry<String, String> entry : MainGUI.namePartNumPair.entrySet()){
+                bw.write("" + entry.getKey() + "!" + entry.getValue() + "\r\n");
+            }
+            bw.close();
+            writer.close();
+        }
+        catch (IOException e){
+            System.out.println("Err: " + e.toString());
+            return 1;   // Error Code 3: File write error
+        }
+        return 0;
+    }
+
     public static int updateAll(){
         int errCode;
         if((errCode = updateData(MainGUI.BRAND, false)) != 0){
@@ -159,6 +212,9 @@ public class DataInAndUpdate {
         }
         if((errCode = updateData(MainGUI.NOTCONSIDER, true)) != 0){
             return (50+errCode);
+        }
+        if((errCode = updatePairs()) != 0){
+            return (60+errCode);
         }
         return 0;
     }

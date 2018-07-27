@@ -11,14 +11,10 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.concurrent.locks.LockSupport;
 
 public class ExcelProcess {
     private static SimpleDateFormat myFormat = new SimpleDateFormat("yyyyMMdd");
     private static WritableCellFormat titleFormat;
-    private static WritableCellFormat goodFormat;
-    private static WritableCellFormat expiredFormat;
-    private static WritableCellFormat noneFormat;
     private static WritableCellFormat normalFormat;
     public static int currentProcess = 0;
 
@@ -34,7 +30,7 @@ public class ExcelProcess {
         }
         File dataFile = new File(sourceFilePath);
         processDataHelper(dataFile);
-        outputCatlog();
+        outputCatalog();
     }
     private static Queue<Sheet> getSheetNum(Workbook wb){
         int sheet_size = wb.getNumberOfSheets();
@@ -71,27 +67,19 @@ public class ExcelProcess {
             currencyColIdx = currDataSheet.findCell("Po Currency").getColumn();
             int rowNum = currDataSheet.getRows();
             for(int i = 1; i < rowNum; i++) {
-                if (currDataSheet.getCell(orderTypeColIdx, i).getContents().equals("Goods")) {
-                    continue;
-                }
+                if (currDataSheet.getCell(orderTypeColIdx, i).getContents().equals("Goods")) continue;
                 String currSupplier = currDataSheet.getCell(supplierColIdx, i).getContents();
-                if(MainGUI.suppliersNotConsider.contains(currSupplier)){
-                    continue;
-                }
-                String currDescription = currDataSheet.getCell(itemDescriptionColIdx, i).getContents();
+                if(MainGUI.suppliersNotConsider.contains(currSupplier)) continue;
+                String currDescription = replaceChinese(currDataSheet.getCell(itemDescriptionColIdx, i).getContents().toUpperCase());
                 boolean isNotConsider = false;
                 for(int j = 0; j < MainGUI.suppliersNotConsider.size(); j++){
-                    if(currSupplier.contains(MainGUI.suppliersNotConsider.get(j)) || currDescription.contains(MainGUI.suppliersNotConsider.get(j))){
+                    if(currSupplier.contains(MainGUI.suppliersNotConsider.get(j))){
                         isNotConsider = true;
                         break;
                     }
                 }
-                if(!isNotConsider && isDescriptionUseless(currDescription)){
-                    isNotConsider = true;
-                }
-                if(isNotConsider){
-                    continue;
-                }
+                if(!isNotConsider && isDescriptionUseless(currDescription)) isNotConsider = true;
+                if(isNotConsider) continue;
                 currentProcess = i;
                 MainGUI.processingLabel.setText("Current processing line: " + ExcelProcess.currentProcess);
                 String currBuyer = currDataSheet.getCell(buyerColIdx, i).getContents();
@@ -104,17 +92,14 @@ public class ExcelProcess {
                 double currPrice = ((NumberCell) currDataSheet.getCell(priceColIdx, i)).getValue();
                 String currCurrency = currDataSheet.getCell(currencyColIdx, i).getContents();
                 System.out.println(currSupplier + ": " + currDescription);
-                currDescription = currDescription.toUpperCase();
                 String[] definition = processDescription(currDescription);
+                // If skip this item, return null; if stop process return String[1]; if normal, return String[3]
                 if(definition == null){
                     MainGUI.suppliersNotConsider.add(currDescription);
                     continue;
                 }
                 if(definition.length == 1) {
                     return;
-                }
-                if(definition[0].equals("NULL") && !MainGUI.uselessData.contains(definition[2])){
-                    MainGUI.uselessData.add(definition[2]);
                 }
                 TypeOrPartNum currPartNumNode;
                 Brand currBrandNode;
@@ -170,13 +155,12 @@ public class ExcelProcess {
         }
     }
     private static boolean isDescriptionUseless(String description){
-        description = replaceChinese(description);
         for(int i = 0; i < MainGUI.suppliersNotConsider.size(); i++){
             String currUseless = MainGUI.suppliersNotConsider.get(i);
             if(description.contains(currUseless)){
                 return true;
             }
-            if(getSimilarityRatio(description.toUpperCase(), currUseless) > 0.5){
+            if(getSimilarityRatio(description, currUseless) > 0.5){
                 return true;
             }
         }
@@ -224,7 +208,7 @@ public class ExcelProcess {
     }
 
     private static int writeCnt = 0;
-    private static void outputCatlog(){
+    private static void outputCatalog(){
         int itemNameCol = 0;
         int itemTypeCol = 1;
         int itemBrandCol = 2;
@@ -312,7 +296,7 @@ public class ExcelProcess {
             writeCnt++;
             if(writeCnt < 5){
                 initializeFormat();
-                outputCatlog();
+                outputCatalog();
             }
         }
     }
@@ -323,21 +307,9 @@ public class ExcelProcess {
             titleFormat.setAlignment(Alignment.CENTRE);
             titleFormat.setVerticalAlignment(VerticalAlignment.CENTRE);
             WritableFont myFont = new WritableFont(WritableFont.ARIAL,10, WritableFont.NO_BOLD, false);
-            goodFormat = new WritableCellFormat(myFont);
-            expiredFormat = new WritableCellFormat(myFont);
-            noneFormat = new WritableCellFormat(myFont);
             normalFormat = new WritableCellFormat(myFont);
             normalFormat.setAlignment(Alignment.CENTRE);
             normalFormat.setVerticalAlignment(VerticalAlignment.CENTRE);
-            goodFormat.setBackground(Colour.LIGHT_GREEN);
-            goodFormat.setAlignment(Alignment.CENTRE);
-            goodFormat.setVerticalAlignment(VerticalAlignment.CENTRE);
-            expiredFormat.setBackground(Colour.RED);
-            expiredFormat.setAlignment(Alignment.CENTRE);
-            expiredFormat.setVerticalAlignment(VerticalAlignment.CENTRE);
-            noneFormat.setBackground(Colour.YELLOW);
-            noneFormat.setAlignment(Alignment.CENTRE);
-            noneFormat.setVerticalAlignment(VerticalAlignment.CENTRE);
         }
         catch(WriteException e){
             System.out.println("Err: 5, Initialize Error.");
@@ -352,19 +324,20 @@ public class ExcelProcess {
     private static boolean isItemSure = false;
     private static boolean isPartNumSure = false;
     private static String[] processDescription(String description){
-        String descriptionSearch = replaceChinese(description);
         isBrandSure = false;
         isItemSure = false;
         isPartNumSure = false;
-        descriptionSearch = descriptionSearch.toUpperCase();
-        String itemBrand = findPossibleBrand(descriptionSearch);
-        String itemPartNum = findPossiblePartNum(descriptionSearch);
-        String itemName = findPossibleItemName(descriptionSearch);
-        if(MainGUI.uselessData.contains(itemPartNum) && itemName == null){
-            itemName = "NULL";
+        String itemBrand = findPossibleBrand(description);
+        String itemPartNum = findPossiblePartNum(description);
+        String itemName = findPossibleItemName(description);
+        if(itemName == null && itemPartNum != null){
+            itemName = MainGUI.namePartNumPair.get(itemPartNum);
+            if(itemName != null){
+                isItemSure = true;
+            }
         }
         if(!isBrandSure || !isItemSure || !isPartNumSure){
-            MyRunnable definitionRunnable = new MyRunnable(descriptionSearch, itemName, itemBrand, itemPartNum, Thread.currentThread());
+            MyRunnable definitionRunnable = new MyRunnable(description, itemName, itemBrand, itemPartNum, Thread.currentThread());
             Thread definitionThread = new Thread(definitionRunnable);
             definitionThread.start();
             try{
@@ -402,9 +375,7 @@ public class ExcelProcess {
         return definition;
     }
     private static void add2Dict(String[] definition){
-        if(definition[0].equals("NULL")){
-            return;
-        }
+        MainGUI.namePartNumPair.putIfAbsent(definition[2], definition[0]);
         if(!MainGUI.brandKnown.contains(definition[1].toUpperCase())){
             DataInAndUpdate.changeData();
             MainGUI.brandKnown.add(definition[1].toUpperCase());
@@ -468,9 +439,6 @@ public class ExcelProcess {
         if(itemBrand == null){
             if(description.contains("(") && description.contains(")")){
                 itemBrand = description.substring(description.indexOf('(')+1, description.indexOf(')'));
-                if(itemBrand.length() == 0){
-                    itemBrand = null;
-                }
             }
         }
         return itemBrand;
@@ -489,16 +457,18 @@ public class ExcelProcess {
             return itemPartNum;
         }
         int patternNum = findCharacterNum(description, "[+-]");
-        String temp= "\\w+";
-        String regex = "";
-        for(int i = 0; i < patternNum; i++){
-            regex = regex + temp + "[-+]";
-        }
-        regex = regex + temp;
-        Pattern p = Pattern.compile(regex);
-        Matcher m = p.matcher(description);
-        if(m.find()){
-            itemPartNum = m.group(0);
+        if(patternNum != 0) {
+            String temp = "\\w+";
+            String regex = "";
+            for (int i = 0; i < patternNum; i++) {
+                regex = regex + temp + "[-+]";
+            }
+            regex = regex + temp;
+            Pattern p = Pattern.compile(regex);
+            Matcher m = p.matcher(description);
+            if (m.find()) {
+                itemPartNum = m.group(0);
+            }
         }
         return itemPartNum;
     }
